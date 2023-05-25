@@ -13,13 +13,13 @@
 
 疾病id为：进入网站的首页后点击自己想要爬取的疾病（以流感为例）
 
-![image](\temp\1.png)
+![image](temp/1.png)
 
-##点击查询
+**点击查询**
 
-##点击导出
+**点击导出**
 
-##复制导出链接
+**复制导出链接**
 
 
 https://www.phsciencedata.cn/Share/frameset?
