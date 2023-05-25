@@ -13,7 +13,7 @@
 
 疾病id为：进入网站的首页后点击自己想要爬取的疾病（以流感为例）
 
-![image](D:\github\phsciencedata_crawler\phsciencedata_crawler_region\temp\1.png)
+![image](\temp\1.png)
 
 ##点击查询
 
