@@ -1,7 +1,7 @@
 # phsciencedata_crawler_region
  公共卫生数据科学中心（https://www.phsciencedata.cn/）
 
-# 疾病数据分地区爬虫
+# 疾病数据分地区/分省份爬虫
 
 懒得写用法了，真有人用提个issues我再update……
 
