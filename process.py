@@ -10,7 +10,9 @@ year_2=int(input("请输入终止年份："))
 diseaseId=int(input("请输入疾病ID："))
 foldername = str(diseaseId)
 os.makedirs(foldername, exist_ok=True)
-finaldf = pd.read_csv('template.csv', encoding='UTF-8', header=None)
+age='template_age.csv'
+reigon='template_region.csv'
+finaldf = pd.read_csv(age, encoding='UTF-8', header=None)
 # finaldf = finaldf.values.tolist()
 for i in range(year_1, year_2 + 1):
     for j in range(1, 13):
