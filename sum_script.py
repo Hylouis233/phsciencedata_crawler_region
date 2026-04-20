@@ -1,33 +1,45 @@
-import pandas as pd
 import os
-import xml.etree.ElementTree as ET
-import xmltodict
-import re
-import csv
-diseaseId=int(input("请输入疾病ID："))
-foldername = str(diseaseId)
-os.makedirs(foldername, exist_ok=True)
-finaldf = pd.read_csv("D:/github/phsciencedata_crawler/final.csv",encoding='gbk')
-df=finaldf
-df_year = pd.DataFrame()
-a="年龄分组"
-# a="地区"
-what=str(a)
-for region in df[what].unique():
-    # 筛选出该地区的数据
-    df_region = df[df[what] == region]
-    # 对每年进行循环
-    for year in df_region["年份"].unique():
-        # 筛选出该年的数据
-        df_year_region = df_region[df_region["年份"] == year]
-        # 计算该年的发病数和死亡数的总和
-        sum_cases = df_year_region["发病数"].sum()
-        sum_deaths = df_year_region["死亡数"].sum()
-        # 计算该年的发病率和死亡率的平均值
-        mean_incidence = df_year_region["发病率(1/10万)"].mean()
-        mean_mortality = df_year_region["死亡率(1/10万)"].mean()
-        # 创建一个新的数据行，包含该地区该年的数据
-        new_row = {what: region, "发病数": sum_cases, "死亡数": sum_deaths, "发病率(1/10万)": mean_incidence, "死亡率(1/10万)": mean_mortality, "年份": year}
-        # 将新的数据行添加到每年的数据框中
-        df_year = df_year.append(new_row, ignore_index=True)
-df_year.to_csv(what+'_year_final.csv', index=True, header=True, encoding='gbk')
+
+import pandas as pd
+
+
+def main() -> None:
+    disease_id = int(input('请输入疾病ID：'))
+    data_type = input('请输入汇总类型（age/region）：').strip().lower()
+
+    foldername = str(disease_id)
+    os.makedirs(foldername, exist_ok=True)
+
+    source_file = os.path.join(foldername, 'final.csv')
+    if not os.path.exists(source_file):
+        raise FileNotFoundError(f'未找到汇总源文件：{source_file}')
+
+    df = pd.read_csv(source_file, encoding='gbk')
+
+    if data_type == 'age':
+        group_col = '年龄分组'
+    elif data_type == 'region':
+        group_col = '地区'
+    else:
+        raise ValueError('汇总类型必须是 age 或 region')
+
+    if group_col not in df.columns:
+        raise KeyError(f'当前 final.csv 不包含列：{group_col}，请确认 process.py 的处理类型是否一致')
+
+    yearly_df = (
+        df.groupby([group_col, '年份'], as_index=False)
+        .agg(
+            发病数=('发病数', 'sum'),
+            死亡数=('死亡数', 'sum'),
+            **{'发病率(1/10万)': ('发病率(1/10万)', 'mean')},
+            **{'死亡率(1/10万)': ('死亡率(1/10万)', 'mean')},
+        )
+    )
+
+    output_file = os.path.join(foldername, f'{group_col}_year_final.csv')
+    yearly_df.to_csv(output_file, index=False, header=True, encoding='gbk')
+    print(f'年度汇总完成：{output_file}')
+
+
+if __name__ == '__main__':
+    main()
