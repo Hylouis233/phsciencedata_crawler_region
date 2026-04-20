@@ -55,8 +55,8 @@ def main() -> None:
                 continue
 
             monthly_df = parse_excel_xml(xml_file)
-            monthly_df.loc[:, len(monthly_df.columns) + 1] = year
-            monthly_df.loc[:, len(monthly_df.columns) + 1] = month
+            monthly_df.loc[:, len(monthly_df.columns)] = year
+            monthly_df.loc[:, len(monthly_df.columns)] = month
             final_df = pd.concat([final_df, monthly_df], axis=0, ignore_index=True)
 
     output_file = os.path.join(foldername, 'final.csv')

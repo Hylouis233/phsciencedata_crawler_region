@@ -26,6 +26,13 @@ def main() -> None:
     if group_col not in df.columns:
         raise KeyError(f'当前 final.csv 不包含列：{group_col}，请确认 process.py 的处理类型是否一致')
 
+
+    numeric_cols = ['发病数', '死亡数', '发病率(1/10万)', '死亡率(1/10万)']
+    for col in numeric_cols:
+        if col not in df.columns:
+            raise KeyError(f'当前 final.csv 不包含列：{col}，请确认文件内容完整')
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
     yearly_df = (
         df.groupby([group_col, '年份'], as_index=False)
         .agg(
