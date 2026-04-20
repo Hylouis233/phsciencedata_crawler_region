@@ -1,37 +1,61 @@
 # phsciencedata_crawler
- 公共卫生数据科学中心（https://www.phsciencedata.cn/）
+公共卫生数据科学中心（https://www.phsciencedata.cn/）
 
-# 疾病数据分地区/分省份爬虫
+# 疾病数据分年龄/分地区爬虫
 
-懒得写用法了，真有人用提个issues我再update……
+## 使用教程
 
-使用教程：
+## 环境依赖
 
-## 登录网站
+运行前请先安装依赖：
 
-打开download.py并运行
+```bash
+pip install pandas requests
+```
 
-疾病id为：进入网站的首页后点击自己想要爬取的疾病（以流感为例）
+### 1) 登录网站并导出链接
+
+打开 `download.py` 并运行，按提示输入：
+
+- 起始年份
+- 终止年份
+- 疾病 ID
+- 下载类型（`age` 或 `region`）
+
+疾病 ID 获取方式：进入网站首页后点击想爬取的疾病（以流感为例）。
 
 ![image](temp/1.png)
 
-**点击查询**
+点击查询 -> 点击导出 -> 复制导出链接，链接中 `_diseaseId` 对应的值就是疾病 ID。
 
-**点击导出**
+示例（节选）：
 
-**复制导出链接**
+```
+https://www.phsciencedata.cn/Share/frameset?...
+...&years=2018&diseaseId=139&months=1...
+```
 
+这里 `diseaseId=139`，即疾病 ID 为 `139`。
 
-https://www.phsciencedata.cn/Share/frameset?
-report=ReportAgeMonth.rptdesign&title=&
-showtitle=false&toolbar=true&navigationbar=true&&
-format=xls&locale=zh_CN&clean=true&
-filename=%E5%8D%A0%E4%BD%8D%E7%AC%A6&years=2018&
-**_diseaseId=139_**
-&months=1&&pi=96&__asattachment=true&__overwrite=false
+### 2) 合并月度数据
 
+运行 `process.py`，按提示输入：
 
-### 此处id就为139
+- 起始年份
+- 终止年份
+- 疾病 ID
+- 处理类型（`age` 或 `region`，需与下载类型一致）
 
-## 运行process即可把爬取的数据进行合并
-## 运行sum_scipt是将月度数据汇总为年度数据
+输出：`{疾病ID}/final.csv`
+
+### 3) 月度转年度汇总
+
+运行 `sum_script.py`，按提示输入：
+
+- 疾病 ID
+- 汇总类型（`age` 或 `region`，需与前一步一致）
+
+输出：
+
+- 年龄维度：`{疾病ID}/年龄分组_year_final.csv`
+- 地区维度：`{疾病ID}/地区_year_final.csv`
