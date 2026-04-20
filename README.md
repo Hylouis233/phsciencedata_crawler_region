@@ -5,6 +5,14 @@
 
 ## 使用教程
 
+## 环境依赖
+
+运行前请先安装依赖：
+
+```bash
+pip install pandas requests
+```
+
 ### 1) 登录网站并导出链接
 
 打开 `download.py` 并运行，按提示输入：
