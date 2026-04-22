@@ -12,9 +12,9 @@ def get_dimension_column(data_type: str) -> str:
     return DIMENSION_COLUMNS[data_type]
 
 
-def get_output_columns(data_type: str) -> list[str]:
+def get_final_csv_columns(data_type: str) -> list[str]:
     return [get_dimension_column(data_type), *METRIC_COLUMNS, *DATE_COLUMNS]
 
 
-def get_required_columns(data_type: str) -> list[str]:
-    return get_output_columns(data_type)
+def get_summary_required_columns(data_type: str) -> list[str]:
+    return [get_dimension_column(data_type), *METRIC_COLUMNS, DATE_COLUMNS[0]]

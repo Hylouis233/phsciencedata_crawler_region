@@ -2,13 +2,14 @@ import os
 
 import pandas as pd
 
-from schema import METRIC_COLUMNS, get_dimension_column, get_required_columns
+from schema import DATE_COLUMNS, METRIC_COLUMNS, get_dimension_column, get_summary_required_columns
 
 
 def main() -> None:
     disease_id = int(input('请输入疾病ID：'))
     data_type = input('请输入汇总类型（age/region）：').strip().lower()
     group_col = get_dimension_column(data_type)
+    year_col = DATE_COLUMNS[0]
 
     foldername = str(disease_id)
     os.makedirs(foldername, exist_ok=True)
@@ -20,7 +21,7 @@ def main() -> None:
     df = pd.read_csv(source_file, encoding='gbk')
     df.columns = [col.lstrip('\ufeff') if isinstance(col, str) else col for col in df.columns]
 
-    required_columns = get_required_columns(data_type)
+    required_columns = get_summary_required_columns(data_type)
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise KeyError(
@@ -31,13 +32,13 @@ def main() -> None:
     for col in METRIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    df['年份'] = pd.to_numeric(df['年份'], errors='coerce')
-    df = df.dropna(subset=['年份']).copy()
-    df['年份'] = df['年份'].astype(int)
+    df[year_col] = pd.to_numeric(df[year_col], errors='coerce')
+    df = df.dropna(subset=[year_col]).copy()
+    df[year_col] = df[year_col].astype(int)
 
     cases_col, deaths_col, incidence_col, mortality_col = METRIC_COLUMNS
     yearly_df = (
-        df.groupby([group_col, '年份'], as_index=False)
+        df.groupby([group_col, year_col], as_index=False)
         .agg(
             **{
                 cases_col: (cases_col, 'sum'),
@@ -46,7 +47,7 @@ def main() -> None:
                 mortality_col: (mortality_col, 'mean'),
             }
         )
-        .sort_values([group_col, '年份'], ignore_index=True)
+        .sort_values([group_col, year_col], ignore_index=True)
     )
 
     output_file = os.path.join(foldername, f'{group_col}_year_final.csv')
