@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 
-from schema import DATE_COLUMNS, METRIC_COLUMNS, get_dimension_column, get_output_columns
+from schema import DATE_COLUMNS, METRIC_COLUMNS, get_dimension_column, get_final_csv_columns
 
 
 def parse_excel_xml(xml_file: str) -> pd.DataFrame:
@@ -48,8 +48,8 @@ def parse_excel_xml(xml_file: str) -> pd.DataFrame:
     return df.astype('float', errors='ignore')
 
 
-def load_template_columns(template_file: str, data_type: str) -> list[str]:
-    """Load header labels and normalize historical template files to the current schema."""
+def validate_template_and_get_output_columns(template_file: str, data_type: str) -> list[str]:
+    """Validate the template width and return the canonical final.csv schema."""
     template_values = (
         pd.read_csv(template_file, encoding='utf-8-sig', header=None)
         .iloc[0]
@@ -57,7 +57,7 @@ def load_template_columns(template_file: str, data_type: str) -> list[str]:
         .astype(str)
         .tolist()
     )
-    expected_columns = get_output_columns(data_type)
+    expected_columns = get_final_csv_columns(data_type)
 
     if len(template_values) >= len(expected_columns):
         return expected_columns
@@ -77,12 +77,13 @@ def main() -> None:
     disease_id = int(input('请输入疾病ID：'))
     data_type = input('请输入处理类型（age/region）：').strip().lower()
     dimension_col = get_dimension_column(data_type)
+    year_col, month_col = DATE_COLUMNS
 
     foldername = str(disease_id)
     os.makedirs(foldername, exist_ok=True)
 
     template_file = f'template_{data_type}.csv'
-    template_columns = load_template_columns(template_file, data_type)
+    template_columns = validate_template_and_get_output_columns(template_file, data_type)
     expected_monthly_columns = len(template_columns) - len(DATE_COLUMNS)
     final_df = pd.DataFrame(columns=template_columns)
 
@@ -102,8 +103,8 @@ def main() -> None:
                 )
 
             monthly_df.columns = [dimension_col, *METRIC_COLUMNS]
-            monthly_df['年份'] = year
-            monthly_df['月份'] = month
+            monthly_df[year_col] = year
+            monthly_df[month_col] = month
             final_df = pd.concat([final_df, monthly_df], axis=0, ignore_index=True)
 
     output_file = os.path.join(foldername, 'final.csv')
