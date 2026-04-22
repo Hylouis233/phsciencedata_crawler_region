@@ -26,7 +26,7 @@ pip install pandas requests
 
 ![image](temp/1.png)
 
-点击查询 -> 点击导出 -> 复制导出链接，链接中 `_diseaseId` 对应的值就是疾病 ID。
+点击查询 -> 点击导出 -> 复制导出链接，链接中 `diseaseId` 对应的值就是疾病 ID。
 
 示例（节选）：
 
