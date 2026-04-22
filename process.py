@@ -3,13 +3,7 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 
-
-METRIC_COLUMNS = ['发病数', '死亡数', '发病率(1/10万)', '死亡率(1/10万)']
-DATE_COLUMNS = ['年份', '月份']
-DIMENSION_LABELS = {
-    'age': '年龄分组',
-    'region': '地区',
-}
+from schema import DATE_COLUMNS, METRIC_COLUMNS, get_dimension_column, get_output_columns
 
 
 def parse_excel_xml(xml_file: str) -> pd.DataFrame:
@@ -46,7 +40,7 @@ def parse_excel_xml(xml_file: str) -> pd.DataFrame:
     max_cols = max((len(row) for row in data), default=0)
     normalized_data = [row + [''] * (max_cols - len(row)) for row in data]
     df = pd.DataFrame(normalized_data)
-    # 跳过标题和空白行，去掉最右侧汇总行。
+    # 跳过标题和空白行，去掉最下方的汇总行。
     df = df.iloc[3 : len(df) - 1, 1:]
     df = df.reset_index(drop=True)
     df.columns = range(df.shape[1])
@@ -54,7 +48,7 @@ def parse_excel_xml(xml_file: str) -> pd.DataFrame:
     return df.astype('float', errors='ignore')
 
 
-def load_template_columns(template_file: str, dimension_col: str) -> list[str]:
+def load_template_columns(template_file: str, data_type: str) -> list[str]:
     """Load header labels and normalize historical template files to the current schema."""
     template_values = (
         pd.read_csv(template_file, encoding='utf-8-sig', header=None)
@@ -63,13 +57,10 @@ def load_template_columns(template_file: str, dimension_col: str) -> list[str]:
         .astype(str)
         .tolist()
     )
-    expected_columns = [dimension_col, *METRIC_COLUMNS, *DATE_COLUMNS]
+    expected_columns = get_output_columns(data_type)
 
-    if len(template_values) == len(expected_columns):
-        return [dimension_col, *template_values[1:]]
-
-    if len(template_values) > len(expected_columns):
-        return [dimension_col, *template_values[1 : 1 + len(METRIC_COLUMNS)], *template_values[-2:]]
+    if len(template_values) >= len(expected_columns):
+        return expected_columns
 
     raise ValueError(
         f'模板文件列数不足：{template_file}，'
@@ -85,14 +76,13 @@ def main() -> None:
 
     disease_id = int(input('请输入疾病ID：'))
     data_type = input('请输入处理类型（age/region）：').strip().lower()
-    if data_type not in DIMENSION_LABELS:
-        raise ValueError('处理类型必须是 age 或 region')
+    dimension_col = get_dimension_column(data_type)
 
     foldername = str(disease_id)
     os.makedirs(foldername, exist_ok=True)
 
     template_file = f'template_{data_type}.csv'
-    template_columns = load_template_columns(template_file, DIMENSION_LABELS[data_type])
+    template_columns = load_template_columns(template_file, data_type)
     expected_monthly_columns = len(template_columns) - len(DATE_COLUMNS)
     final_df = pd.DataFrame(columns=template_columns)
 
@@ -111,7 +101,7 @@ def main() -> None:
                     f'期望 {expected_monthly_columns} 列，实际 {monthly_df.shape[1]} 列。'
                 )
 
-            monthly_df.columns = template_columns[:-2]
+            monthly_df.columns = [dimension_col, *METRIC_COLUMNS]
             monthly_df['年份'] = year
             monthly_df['月份'] = month
             final_df = pd.concat([final_df, monthly_df], axis=0, ignore_index=True)
