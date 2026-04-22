@@ -2,19 +2,13 @@ import os
 
 import pandas as pd
 
-
-GROUP_COLUMNS = {
-    'age': '年龄分组',
-    'region': '地区',
-}
-NUMERIC_COLUMNS = ['发病数', '死亡数', '发病率(1/10万)', '死亡率(1/10万)']
+from schema import METRIC_COLUMNS, get_dimension_column, get_required_columns
 
 
 def main() -> None:
     disease_id = int(input('请输入疾病ID：'))
     data_type = input('请输入汇总类型（age/region）：').strip().lower()
-    if data_type not in GROUP_COLUMNS:
-        raise ValueError('汇总类型必须是 age 或 region')
+    group_col = get_dimension_column(data_type)
 
     foldername = str(disease_id)
     os.makedirs(foldername, exist_ok=True)
@@ -26,8 +20,7 @@ def main() -> None:
     df = pd.read_csv(source_file, encoding='gbk')
     df.columns = [col.lstrip('\ufeff') if isinstance(col, str) else col for col in df.columns]
 
-    group_col = GROUP_COLUMNS[data_type]
-    required_columns = [group_col, '年份', *NUMERIC_COLUMNS]
+    required_columns = get_required_columns(data_type)
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise KeyError(
@@ -35,20 +28,23 @@ def main() -> None:
             '请确认文件表头是否正确，且 process.py 的处理类型与当前汇总类型一致。'
         )
 
-    for col in NUMERIC_COLUMNS:
+    for col in METRIC_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
     df['年份'] = pd.to_numeric(df['年份'], errors='coerce')
     df = df.dropna(subset=['年份']).copy()
     df['年份'] = df['年份'].astype(int)
 
+    cases_col, deaths_col, incidence_col, mortality_col = METRIC_COLUMNS
     yearly_df = (
         df.groupby([group_col, '年份'], as_index=False)
         .agg(
-            发病数=('发病数', 'sum'),
-            死亡数=('死亡数', 'sum'),
-            **{'发病率(1/10万)': ('发病率(1/10万)', 'mean')},
-            **{'死亡率(1/10万)': ('死亡率(1/10万)', 'mean')},
+            **{
+                cases_col: (cases_col, 'sum'),
+                deaths_col: (deaths_col, 'sum'),
+                incidence_col: (incidence_col, 'mean'),
+                mortality_col: (mortality_col, 'mean'),
+            }
         )
         .sort_values([group_col, '年份'], ignore_index=True)
     )
