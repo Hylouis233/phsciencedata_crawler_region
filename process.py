@@ -48,12 +48,11 @@ def parse_excel_xml(xml_file: str) -> pd.DataFrame:
     return df.astype('float', errors='ignore')
 
 
-def validate_template_and_get_output_columns(template_file: str, data_type: str) -> list[str]:
-    """Validate the template width and return the canonical final.csv schema."""
+def validate_template_and_get_final_csv_columns(template_file: str, data_type: str) -> list[str]:
+    """Validate the template width and return the canonical final.csv columns."""
     template_values = (
-        pd.read_csv(template_file, encoding='utf-8-sig', header=None)
+        pd.read_csv(template_file, encoding='utf-8-sig', header=None, keep_default_na=False)
         .iloc[0]
-        .dropna()
         .astype(str)
         .tolist()
     )
@@ -83,7 +82,7 @@ def main() -> None:
     os.makedirs(foldername, exist_ok=True)
 
     template_file = f'template_{data_type}.csv'
-    template_columns = validate_template_and_get_output_columns(template_file, data_type)
+    template_columns = validate_template_and_get_final_csv_columns(template_file, data_type)
     expected_monthly_columns = len(template_columns) - len(DATE_COLUMNS)
     final_df = pd.DataFrame(columns=template_columns)
 
